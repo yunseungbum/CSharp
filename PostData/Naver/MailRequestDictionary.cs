@@ -1,6 +1,6 @@
 ﻿namespace PostData
 {
-    public class MailRequestDictionary
+    public partial class NaverMailService
     {
         public Dictionary<string, string> CreateReadMailRequest(string mailSN)
         {

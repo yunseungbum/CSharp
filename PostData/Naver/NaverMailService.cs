@@ -1,39 +1,30 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
 
 namespace PostData
 {
     public partial class NaverMailService : IWebMailClient
     {
         private readonly IHttpClientComponent httpComponent;
-        private  NaverCookies Cookies;
-
-        private readonly int MailSNNum = 8784;
-
 
         public NaverMailService()
         {
-             httpComponent = new HttpClientComponent();
+            httpComponent = new HttpClientComponent();
             InitializeCookies();
         }
 
         private void InitializeCookies()
         {
-            Cookies = new NaverCookies
-            {
-                NidSes = "Your NidSes",
-                NidAut = "Your NidAut"
-            };
+            NidSes = "Your-NidSes";
+            NidAut = "Your-NidAut";           
         }
 
-        public async Task FetchMailAsync(string mailSN)
+        public async Task<bool> FetchMailAsync(string mailSN)
         {
             NaverSetCookies();
 
-            FormUrlEncodedContent content = NaverRequestContent(mailSN);
+            string result = await httpComponent.PostAsync("https://mail.naver.com/json/read", NaverRequestContent(mailSN));
 
-            string result = await httpComponent.PostAsync("https://mail.naver.com/json/read", content);
-
-            NaverProcessResponse(result);
+            return NaverProcessResponse(result);
         }
 
         private void NaverSetCookies()
@@ -42,8 +33,8 @@ namespace PostData
 
             var cookieDict = new Dictionary<string, string>
             {
-                { "NID_SES", Cookies.NidSes },
-                { "NID_AUT", Cookies.NidAut }
+                { "NID_SES", NidSes },
+                { "NID_AUT", NidAut }
             };
 
             httpComponent.SetCookies(cookieDict, baseUri);
@@ -51,37 +42,35 @@ namespace PostData
 
         private FormUrlEncodedContent NaverRequestContent(string mailSN)
         {
-            MailRequestDictionary mailRequestDictionary = new MailRequestDictionary();
-            Dictionary<string, string> values = mailRequestDictionary.CreateReadMailRequest(mailSN);
+            Dictionary<string, string> values = CreateReadMailRequest(mailSN);
             return new FormUrlEncodedContent(values);
         }
 
-        private void NaverProcessResponse(string result)
+        private bool NaverProcessResponse(string result)
         {
-            if (result.Contains("FAIL"))
+            try
             {
-                Console.WriteLine(result);
-                Environment.Exit(1);
+                Root root = JsonConvert.DeserializeObject<Root>(result);
+
+                if (root.Result == "FAIL" && root.LoginStatus == "NOLOGIN")
+                {
+                    Console.WriteLine("로그인이 필요합니다.");
+                    return false;
+                }
+
+                if (root?.mailInfo != null)
+                {
+                    Console.WriteLine($"제목: {root.mailInfo.subject}");
+                    return true;
+                }
+                return false;
             }
 
-            JObject json = JObject.Parse(result);
-
-            if (json.TryGetValue("mailInfo", out JToken mailInfo))
+            catch (Exception ex)
             {
-                if (mailInfo["subject"] != null)
-                {
-                    Console.WriteLine($"제목: {mailInfo["subject"]}");
-                }
-                else
-                {
-                    Console.WriteLine("오류: subject 없음");
-                }
-            }
-            else
-            {
-                Console.WriteLine("오류: 메일 정보 없음");
+                Console.WriteLine($"예외 발생: {ex.Message}");
+                return false;
             }
         }
-
     }
 }

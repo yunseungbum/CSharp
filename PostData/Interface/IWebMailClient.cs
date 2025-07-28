@@ -2,6 +2,6 @@
 {
     internal interface IWebMailClient
     {
-        Task FetchMailAsync(string mailSN);
+        Task<bool> FetchMailAsync(string mailSN);
     }
 }

@@ -39,7 +39,13 @@
                 try
                 {
                     string mailSN = mailSNNum.ToString();
-                    await client.FetchMailAsync(mailSN);
+
+                    bool isSuccess = await client.FetchMailAsync($"{mailSN}");
+
+                    if(isSuccess == false)
+                    {
+                        break;
+                    }
 
                     Console.WriteLine("\n");
                     mailSNNum--;
@@ -48,6 +54,7 @@
                 catch (Exception ex)
                 {
                     Console.WriteLine("파일 읽기 오류: " + ex.Message);
+                    break;
                 }
 
                 await Task.Delay(50);
