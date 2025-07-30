@@ -56,6 +56,20 @@ namespace PostData
                 return ex.Message;
             }
         }
+
+        public async Task<string> GetAsync(string relativeUrl)
+        {
+            try
+            {
+                HttpResponseMessage response = await HttpClient.GetAsync(relativeUrl);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
     }
 }
 

@@ -14,8 +14,8 @@ namespace PostData
 
         private void InitializeCookies()
         {
-            NidSes = "Your-NidSes";
-            NidAut = "Your-NidAut";           
+            NidSes = "your NidSes";
+            NidAut = "your NidAut";           
         }
 
         public async Task<bool> FetchMailAsync(string mailSN)
